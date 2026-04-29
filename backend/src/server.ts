@@ -2,11 +2,14 @@ import express from "express";
 import type { Request, Response } from "express";
 import cors from "cors";
 import pool from "./config/database";
+import router from "./routes";
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+app.use(router);
 
 app.get("/health", async (_req: Request, res: Response) => {
   try {
