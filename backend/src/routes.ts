@@ -22,4 +22,10 @@ router.post("/customers", (req, res) => customerController.create(req, res));
 // Rota para atualizar OS
 router.put("/orders/:id", (req, res) => orderController.update(req, res));
 
+// Rota para obter OS por ID
+router.get("/orders/:id", (req, res) => orderController.getById(req, res));
+
+// Rota para deletar OS
+router.delete("/orders/:id", (req, res) => orderController.delete(req, res));
+
 export default router;
