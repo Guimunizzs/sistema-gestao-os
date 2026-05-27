@@ -1,0 +1,14 @@
+{
+  "name": "sistema-gestao-os",
+  "version": "1.0.0",
+  "description": "Sistema de Gestão de Ordens de Serviço",
+  "private": true,
+  "scripts": {
+    "dev": "cd backend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "install:all": "cd backend && npm install"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

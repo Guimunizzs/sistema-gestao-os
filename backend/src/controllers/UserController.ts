@@ -1,28 +1,69 @@
-import { Request, Response } from 'express';
-import pool from '../config/database';
-import bcrypt from 'bcryptjs';
+import { Request, Response } from "express";
+import pool from "../config/database";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 export class UserController {
   async register(req: Request, res: Response) {
     const { username, password, email, role } = req.body;
 
-    try{
+    try {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
-      const sql = 'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)';
-      const params = [username, email, hashedPassword, role || 'tecnico'];
+      const sql =
+        "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
+      const params = [username, email, hashedPassword, role || "tecnico"];
 
       const [result]: any = await pool.execute(sql, params);
 
-      return res.status(201).json({ message: 'Usuário registrado com sucesso', userId: result.insertId });
-
-    } catch (error: any) {// Tratamento de erro específico para e-mail duplicado
-      if (error.code === 'ER_DUP_ENTRY') {
-        return res.status(400).json({ error: 'Este e-mail já está cadastrado.' });
+      return res.status(201).json({
+        message: "Usuário registrado com sucesso",
+        userId: result.insertId,
+      });
+    } catch (error: any) {
+      // Tratamento de erro específico para e-mail duplicado
+      if (error.code === "ER_DUP_ENTRY") {
+        return res
+          .status(400)
+          .json({ error: "Este e-mail já está cadastrado." });
       }
 
-      return res.status(500).json({ error: 'Erro interno no servidor', detalhes: error.message });
-     }
-   }
+      return res
+        .status(500)
+        .json({ error: "Erro interno no servidor", detalhes: error.message });
+    }
   }
+
+  async login(req: Request, res: Response) {
+    const { email, password } = req.body;
+
+    try {
+      const sql = "SELECT * FROM users WHERE email = ?";
+      const [rows]: any = await pool.execute(sql, [email]);
+
+      if (rows.length === 0) {
+        return res.status(400).json({ error: "Credenciais inválidas" });
+      }
+
+      const user = rows[0];
+      const isMatch = await bcrypt.compare(password, user.password);
+
+      if (!isMatch) {
+        return res.status(400).json({ error: "Credenciais inválidas" });
+      }
+
+      const token = jwt.sign(
+        { id: user.id, email: user.email, role: user.role },
+        process.env.JWT_SECRET as string,
+        { expiresIn: "1h" },
+      );
+
+      return res.json({ token });
+    } catch (error: any) {
+      return res
+        .status(500)
+        .json({ error: "Erro interno no servidor", detalhes: error.message });
+    }
+  }
+}
