@@ -49,4 +49,35 @@ export class OrderController {
       return res.status(500).json({ error: 'Erro ao listar OS', detalhes: error.message });
     }
   }
+
+  async update(req: Request, res: Response) {
+    const { id } = req.params;
+    const { technical_report, status, total_value } = req.body;
+
+    try {
+      const sql = `
+        UPDATE service_orders
+        SET technical_report = ?, status = ?, total_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+
+        const params = [
+          technical_report || null, 
+          status || null, 
+          total_value || null, 
+          id
+        ];
+
+        const [result]: any = await pool.execute(sql, params);
+
+        if (result.affectedRows === 0) {
+          return res.status(404).json({ error:
+            'Ordem de Serviço não encontrada'
+          });
+        }
+
+        return res.json({ message: 'Ordem de Serviço atualizada com sucesso!'});
+
+    } catch (error: any) {
+      return res.status(500).json({ error: 'Erro ao atualizar OS', detalhes: error.message });
+    }
+  }
 }

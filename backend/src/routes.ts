@@ -19,4 +19,7 @@ router.get("/orders", (req, res) => orderController.listAll(req, res));
 // Rotas para clientes
 router.post("/customers", (req, res) => customerController.create(req, res));
 
+// Rota para atualizar OS
+router.put("/orders/:id", (req, res) => orderController.update(req, res));
+
 export default router;
