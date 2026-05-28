@@ -43,8 +43,15 @@ export class OrderController {
 
   async listAll(req: Request, res: Response) {
     try {
-      // 3. Busca direto na tabela correta
-      const [rows] = await pool.execute("SELECT * FROM service_orders");
+      const sql = `SELECT so.*,
+        c.name AS customer_name,
+        c.phone AS customer_phone,
+        c.email AS customer_email
+        FROM service_orders so
+        INNER JOIN customers c ON so.customer_id = c.id
+        ORDER BY so.created_at DESC`;
+
+      const [rows]: any = await pool.execute(sql);
       return res.json(rows);
     } catch (error: any) {
       return res
@@ -57,7 +64,18 @@ export class OrderController {
     const { id } = req.params;
 
     try {
-      const sql = "SELECT * FROM service_orders WHERE id = ?";
+      const sql = `
+      SELECT 
+        so.*, 
+        c.name AS customer_name, 
+        c.phone AS customer_phone, 
+        c.email AS customer_email,
+        c.document AS customer_document,
+        c.address AS customer_address
+      FROM service_orders so
+      INNER JOIN customers c ON so.customer_id = c.id
+      WHERE so.id = ?
+    `;
       const [rows]: any = await pool.execute(sql, [id]);
 
       if (rows.length === 0) {
