@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
 import pool from "../config/database";
+import { CustomRequest } from "../middlewares/auth";
 
 export class OrderController {
-  async create(req: Request, res: Response) {
+  async create(req: CustomRequest, res: Response) {
     // 1. Pegamos os campos exatamente como estão na sua tabela service_orders
     const {
       customer_id,
@@ -12,12 +13,14 @@ export class OrderController {
       description_problem,
     } = req.body;
 
+    const technician_id = req.tokenData?.id;
+
     try {
       // 2. SQL Puro apontando para a tabela 'service_orders' e colunas corretas
       const sql = `
         INSERT INTO service_orders 
-        (customer_id, equipment, brand, serial_number, description_problem, status) 
-        VALUES (?, ?, ?, ?, ?, 'aberta')
+        (customer_id, equipment, brand, serial_number, description_problem, status, technician_id) 
+        VALUES (?, ?, ?, ?, ?, 'aberta', ?)
       `;
 
       const params = [
@@ -26,6 +29,7 @@ export class OrderController {
         brand || null,
         serial_number || null,
         description_problem || null,
+        technician_id,
       ];
 
       const [result]: any = await pool.execute(sql, params);
