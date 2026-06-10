@@ -3,6 +3,7 @@ import { UserController } from "./controllers/UserController";
 import { OrderController } from "./controllers/OrderController";
 import { CustomerController } from "./controllers/CustomerControler";
 import { authMiddleware } from "./middlewares/auth";
+import { checkRole } from "./middlewares/CheckRole";
 
 const router = Router();
 const userController = new UserController();
@@ -37,7 +38,7 @@ router.get("/orders/:id", authMiddleware, (req, res) =>
 );
 
 // Rota para deletar OS
-router.delete("/orders/:id", authMiddleware, (req, res) =>
+router.delete("/orders/:id", authMiddleware, checkRole(["admin"]), (req, res) =>
   orderController.delete(req, res),
 );
 

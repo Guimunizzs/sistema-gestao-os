@@ -95,28 +95,57 @@ export class OrderController {
     }
   }
 
-  async update(req: Request, res: Response) {
+  async update(req: CustomRequest, res: Response) {
     const { id } = req.params;
     const { technical_report, status, total_value } = req.body;
+    const technician_id = req.tokenData?.id;
 
     try {
-      const sql = `
-        UPDATE service_orders
-        SET technical_report = ?, status = ?, total_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+      const [currentOrder]: any = await pool.execute(
+        "SELECT status FROM service_orders WHERE id = ?",
+        [id],
+      );
 
-      const params = [
-        technical_report || null,
-        status || null,
-        total_value || null,
-        id,
-      ];
-
-      const [result]: any = await pool.execute(sql, params);
-
-      if (result.affectedRows === 0) {
+      if (currentOrder.length === 0) {
         return res
           .status(404)
-          .json({ error: "Ordem de Serviço não encontrada" });
+          .json({ error: "Ordem de serviço não encntrada" });
+      }
+
+      const oldstatus = currentOrder[0].status;
+
+      // 2. atualiza a ordem de serviço
+
+      const sqlUpdate = `
+      UPDATE service_orders
+      SET technical_report = ?, status = ?, total_value = ?, updated_at = CURRENT_TIMESTAMP, technician_id = ?
+      WHERE id = ?
+    `;
+
+      await pool.execute(sqlUpdate, [
+        technical_report || null,
+        status || oldstatus,
+        total_value || null,
+        technician_id,
+        id,
+      ]);
+
+      // 3. se o status mudou, registra a mudança na tabela de histórico
+      if (oldstatus !== status) {
+        const sqlHistory = `
+        INSERT INTO order_history (order_id, technical_id, old_status, new_status, notes)
+        VALUES (?, ?, ?, ?, ?)
+      `;
+
+        await pool.execute(sqlHistory, [
+          id,
+          technician_id,
+          oldstatus,
+          status,
+          technical_report
+            ? `Laudo técnico: ${technical_report}`
+            : "Status alterado pelo técnico.",
+        ]);
       }
 
       return res.json({ message: "Ordem de Serviço atualizada com sucesso!" });
