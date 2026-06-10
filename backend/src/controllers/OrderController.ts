@@ -133,7 +133,7 @@ export class OrderController {
       // 3. se o status mudou, registra a mudança na tabela de histórico
       if (oldstatus !== status) {
         const sqlHistory = `
-        INSERT INTO order_history (order_id, technical_id, old_status, new_status, notes)
+        INSERT INTO order_history (order_id, technician_id, old_status, new_status, notes)
         VALUES (?, ?, ?, ?, ?)
       `;
 
