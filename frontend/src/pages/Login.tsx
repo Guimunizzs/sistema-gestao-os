@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
 export default function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,8 +28,7 @@ export default function Login() {
       // 3. Salva o token com segurança no localStorage
       localStorage.setItem("@SistemaOS:token", token);
 
-      // 4. Mensagem de sucesso direta sem tentar ler o 'user' que não veio
-      alert("Login efetuado com sucesso!");
+      navigate("/dashboard");
     } catch (err: any) {
       const mensagemErro =
         err.response?.data?.error || "Erro ao tentar fazer login.";
