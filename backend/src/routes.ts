@@ -27,6 +27,10 @@ router.post("/customers", authMiddleware, (req, res) =>
   customerController.create(req, res),
 );
 
+router.get("/customers", authMiddleware, (req, res) =>
+  customerController.listAll(req, res),
+);
+
 // Rota para atualizar OS
 router.put("/orders/:id", authMiddleware, (req, res) =>
   orderController.update(req, res),

@@ -13,28 +13,103 @@ interface Order {
   cliente_nome?: string;
 }
 
+interface Customer {
+  id: number;
+  name: string; // Casando perfeitamente com o seu MySQL
+}
+
 export default function Orders() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Estados do Modal e Formulário
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  const [equipamento, setEquipamento] = useState("");
+  const [defeito, setDefeito] = useState("");
+  const [formError, setFormError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Carrega as ordens silenciadas (após salvar uma nova OS)
+  async function loadOrders() {
+    try {
+      const response = await api.get("/orders");
+      if (Array.isArray(response.data)) {
+        setOrders(response.data);
+      }
+    } catch (err) {
+      setError("Erro ao carregar ordens.");
+    }
+  }
+
+  // Carregamento Inicial Seguro
   useEffect(() => {
-    async function loadOrders() {
+    async function initPage() {
       try {
         setLoading(true);
-        const response = await api.get("/orders");
+        setError("");
 
-        if (Array.isArray(response.data)) {
-          setOrders(response.data);
+        // 1. Garante o carregamento das ordens primeiro
+        const ordersRes = await api.get("/orders");
+        if (Array.isArray(ordersRes.data)) {
+          setOrders(ordersRes.data);
         }
       } catch (err) {
-        setError("Erro ao carregar ordens.");
+        setError("Erro ao carregar ordens de serviço.");
       } finally {
         setLoading(false);
       }
+
+      try {
+        // 2. Busca os clientes na rota em inglês correta agora que adicionamos o GET
+        const customersRes = await api.get("/customers");
+        if (Array.isArray(customersRes.data)) {
+          setCustomers(customersRes.data);
+        }
+      } catch (err) {
+        console.error(
+          "Aviso: Rota de clientes /customers ainda não respondeu.",
+        );
+      }
     }
-    loadOrders();
+
+    initPage();
   }, []);
+
+  async function handleCreateOrder() {
+    setFormError("");
+
+    if (!selectedCustomerId || !equipamento || !defeito) {
+      setFormError("Por favor, preencha todos os campos.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      await api.post("/orders", {
+        id_cliente: Number(selectedCustomerId),
+        equipamento,
+        defeito,
+        status: "aberto",
+      });
+
+      setSelectedCustomerId("");
+      setEquipamento("");
+      setDefeito("");
+      setIsModalOpen(false);
+
+      loadOrders(); // Recarrega a tabela
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.error || "Erro ao criar ordem de serviço.";
+      setFormError(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   function handleLogout() {
     localStorage.removeItem("@SistemaOS:token");
@@ -79,10 +154,19 @@ export default function Orders() {
               Gerencie e acompanhe os chamados de manutenção.
             </p>
           </div>
-          <button className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold px-5 py-2.5 rounded-lg transition-colors shadow-lg shadow-emerald-500/10">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold px-5 py-2.5 rounded-lg transition-colors shadow-lg shadow-emerald-500/10"
+          >
             + Nova Ordem
           </button>
         </header>
+
+        {error && (
+          <div className="mb-6 rounded-lg bg-red-500/10 border border-red-500/20 p-4 text-sm text-red-400">
+            {error}
+          </div>
+        )}
 
         {loading ? (
           <div className="text-slate-400 font-medium animate-pulse">
@@ -157,6 +241,99 @@ export default function Orders() {
           </div>
         )}
       </main>
+
+      {/* MODAL DE CADASTRO */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-slate-900 border border-slate-800 p-6 shadow-2xl">
+            <div className="mb-6 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-white">
+                Cadastrar Nova OS
+              </h2>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-white transition-colors text-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {formError && (
+                <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400 text-center">
+                  {formError}
+                </div>
+              )}
+
+              {/* Seleção do Cliente */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  Cliente
+                </label>
+                <select
+                  value={selectedCustomerId}
+                  onChange={(e) => setSelectedCustomerId(e.target.value)}
+                  className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                >
+                  <option value="">Selecione um cliente...</option>
+                  {customers.map((cli) => (
+                    <option key={cli.id} value={cli.id}>
+                      {cli.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Input Equipamento */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  Equipamento
+                </label>
+                <input
+                  type="text"
+                  value={equipamento}
+                  onChange={(e) => setEquipamento(e.target.value)}
+                  placeholder="Ex: iPhone 13 Pro Max, Notebook Dell"
+                  className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder-slate-600"
+                />
+              </div>
+
+              {/* Input Defeito */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  Defeito Relatado
+                </label>
+                <textarea
+                  value={defeito}
+                  onChange={(e) => setDefeito(e.target.value)}
+                  placeholder="Descreva detalhadamente o problema..."
+                  rows={3}
+                  className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder-slate-600 resize-none"
+                />
+              </div>
+
+              {/* Botões do Modal */}
+              <div className="flex gap-3 mt-6 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2.5 rounded-lg border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCreateOrder}
+                  disabled={isSubmitting}
+                  className="px-5 py-2.5 rounded-lg bg-emerald-500 text-slate-950 font-semibold hover:bg-emerald-400 transition-colors disabled:opacity-50"
+                >
+                  {isSubmitting ? "Salvando..." : "Salvar Ordem"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
