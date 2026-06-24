@@ -61,6 +61,12 @@ export default function Dashboard() {
             >
               🔧 Ordens de Serviço
             </a>
+            <a
+              href="/customers"
+              className="block p-3 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+            >
+              👥 Clientes
+            </a>
           </nav>
         </div>
 
