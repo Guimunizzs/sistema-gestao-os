@@ -1,21 +1,31 @@
 import React, { useEffect, useState } from "react";
 import api from "../services/api";
 
+// 1. Interface alinhada com as colunas reais da tabela 'service_orders'
 interface Order {
   id: number;
-  id_cliente: number;
-  id_tecnico?: number;
-  equipamento: string;
-  defeito: string;
-  status: "aberto" | "em_manutencao" | "finalizado";
-  valor_total?: number;
+  customer_id: number;
+  equipment: string;
+  brand?: string;
+  serial_number?: string;
+  description_problem: string;
+  technical_report?: string;
+  status:
+    | "aberta"
+    | "em_orcamento"
+    | "em_manutencao"
+    | "finalizada"
+    | "entregue";
+  total_value?: number;
   created_at: string;
-  cliente_nome?: string;
+  updated_at: string;
+  technician_id?: number;
+  cliente_nome?: string; // Preenchido caso o backend faça o JOIN com a tabela customers
 }
 
 interface Customer {
   id: number;
-  name: string; // Casando perfeitamente com o seu MySQL
+  name: string;
 }
 
 export default function Orders() {
@@ -27,12 +37,12 @@ export default function Orders() {
   // Estados do Modal e Formulário
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
-  const [equipamento, setEquipamento] = useState("");
-  const [defeito, setDefeito] = useState("");
+  const [equipment, setEquipment] = useState("");
+  const [descriptionProblem, setDescriptionProblem] = useState("");
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Carrega as ordens silenciadas (após salvar uma nova OS)
+  // Recarrega as ordens na tabela de forma silenciosa
   async function loadOrders() {
     try {
       const response = await api.get("/orders");
@@ -51,37 +61,28 @@ export default function Orders() {
         setLoading(true);
         setError("");
 
-        // 1. Garante o carregamento das ordens primeiro
-        const ordersRes = await api.get("/orders");
-        if (Array.isArray(ordersRes.data)) {
-          setOrders(ordersRes.data);
-        }
+        const [ordersRes, customersRes] = await Promise.all([
+          api.get("/orders"),
+          api.get("/customers"),
+        ]);
+
+        if (Array.isArray(ordersRes.data)) setOrders(ordersRes.data);
+        if (Array.isArray(customersRes.data)) setCustomers(customersRes.data);
       } catch (err) {
-        setError("Erro ao carregar ordens de serviço.");
+        setError("Erro ao carregar dados do sistema.");
       } finally {
         setLoading(false);
-      }
-
-      try {
-        // 2. Busca os clientes na rota em inglês correta agora que adicionamos o GET
-        const customersRes = await api.get("/customers");
-        if (Array.isArray(customersRes.data)) {
-          setCustomers(customersRes.data);
-        }
-      } catch (err) {
-        console.error(
-          "Aviso: Rota de clientes /customers ainda não respondeu.",
-        );
       }
     }
 
     initPage();
   }, []);
 
+  // 2. Função de criação enviando as propriedades exatas do banco
   async function handleCreateOrder() {
     setFormError("");
 
-    if (!selectedCustomerId || !equipamento || !defeito) {
+    if (!selectedCustomerId || !equipment || !descriptionProblem) {
       setFormError("Por favor, preencha todos os campos.");
       return;
     }
@@ -90,24 +91,47 @@ export default function Orders() {
       setIsSubmitting(true);
 
       await api.post("/orders", {
-        id_cliente: Number(selectedCustomerId),
-        equipamento,
-        defeito,
-        status: "aberto",
+        customer_id: Number(selectedCustomerId),
+        equipment: equipment,
+        description_problem: descriptionProblem,
+        status: "aberta", // Exatamente como definido no seu ENUM do banco
       });
 
+      // Limpa formulário e fecha modal
       setSelectedCustomerId("");
-      setEquipamento("");
-      setDefeito("");
+      setEquipment("");
+      setDescriptionProblem("");
       setIsModalOpen(false);
 
-      loadOrders(); // Recarrega a tabela
+      loadOrders();
     } catch (err: any) {
       const msg =
-        err.response?.data?.error || "Erro ao criar ordem de serviço.";
+        err.response?.data?.detalhes ||
+        err.response?.data?.error ||
+        "Erro ao criar ordem de serviço.";
       setFormError(msg);
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  // 3. Função inline para atualizar o status respeitando o ENUM do banco
+  async function handleUpdateStatus(
+    orderId: number,
+    currentOrder: Order,
+    newStatus: Order["status"],
+  ) {
+    try {
+      await api.put(`/orders/${orderId}`, {
+        customer_id: currentOrder.customer_id,
+        equipment: currentOrder.equipment,
+        description_problem: currentOrder.description_problem,
+        status: newStatus,
+      });
+      loadOrders();
+    } catch (err) {
+      console.error("Erro ao atualizar status:", err);
+      alert("Não foi possível atualizar o status no banco.");
     }
   }
 
@@ -193,30 +217,56 @@ export default function Orders() {
                   >
                     <td className="p-4 font-mono text-emerald-400">#{os.id}</td>
                     <td className="p-4 font-medium text-white">
-                      {os.equipamento}
+                      {os.equipment}
                     </td>
                     <td className="p-4 max-w-xs truncate text-slate-400">
-                      {os.defeito}
+                      {os.description_problem}
                     </td>
                     <td className="p-4">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border
-                        ${os.status === "aberto" ? "bg-blue-500/10 border-blue-500/20 text-blue-400" : ""}
-                        ${os.status === "em_manutencao" ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : ""}
-                        ${os.status === "finalizado" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : ""}
-                      `}
-                      >
-                        <span
-                          className={`h-1.5 w-1.5 rounded-full 
-                          ${os.status === "aberto" ? "bg-blue-400" : ""}
-                          ${os.status === "em_manutencao" ? "bg-amber-400" : ""}
-                          ${os.status === "finalizado" ? "bg-emerald-400" : ""}
+                      <select
+                        value={os.status}
+                        onChange={(e) =>
+                          handleUpdateStatus(os.id, os, e.target.value as any)
+                        }
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border bg-slate-950 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer
+                          ${os.status === "aberta" ? "border-blue-500/30 text-blue-400" : ""}
+                          ${os.status === "em_orcamento" ? "border-purple-500/30 text-purple-400" : ""}
+                          ${os.status === "em_manutencao" ? "border-amber-500/30 text-amber-400" : ""}
+                          ${os.status === "finalizada" ? "border-emerald-500/30 text-emerald-400" : ""}
+                          ${os.status === "entregue" ? "border-slate-500/30 text-slate-400" : ""}
                         `}
-                        />
-                        {os.status === "em_manutencao"
-                          ? "em manutenção"
-                          : os.status}
-                      </span>
+                      >
+                        <option
+                          value="aberta"
+                          className="bg-slate-900 text-blue-400"
+                        >
+                          🔹 Aberta
+                        </option>
+                        <option
+                          value="em_orcamento"
+                          className="bg-slate-900 text-purple-400"
+                        >
+                          📋 Em Orçamento
+                        </option>
+                        <option
+                          value="em_manutencao"
+                          className="bg-slate-900 text-amber-400"
+                        >
+                          🛠️ Em Manutenção
+                        </option>
+                        <option
+                          value="finalizada"
+                          className="bg-slate-900 text-emerald-400"
+                        >
+                          ✅ Finalizada
+                        </option>
+                        <option
+                          value="entregue"
+                          className="bg-slate-900 text-slate-400"
+                        >
+                          📦 Entregue
+                        </option>
+                      </select>
                     </td>
                     <td className="p-4 text-sm text-slate-400">
                       {new Date(os.created_at).toLocaleDateString("pt-BR")}
@@ -245,12 +295,19 @@ export default function Orders() {
       {/* MODAL DE CADASTRO */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-slate-900 border border-slate-800 p-6 shadow-2xl">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleCreateOrder();
+            }}
+            className="w-full max-w-lg rounded-2xl bg-slate-900 border border-slate-800 p-6 shadow-2xl"
+          >
             <div className="mb-6 flex justify-between items-center">
               <h2 className="text-xl font-bold text-white">
                 Cadastrar Nova OS
               </h2>
               <button
+                type="button"
                 onClick={() => setIsModalOpen(false)}
                 className="text-slate-400 hover:text-white transition-colors text-lg"
               >
@@ -284,35 +341,35 @@ export default function Orders() {
                 </select>
               </div>
 
-              {/* Input Equipamento */}
+              {/* Input Equipment */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">
                   Equipamento
                 </label>
                 <input
                   type="text"
-                  value={equipamento}
-                  onChange={(e) => setEquipamento(e.target.value)}
+                  value={equipment}
+                  onChange={(e) => setEquipment(e.target.value)}
                   placeholder="Ex: iPhone 13 Pro Max, Notebook Dell"
                   className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder-slate-600"
                 />
               </div>
 
-              {/* Input Defeito */}
+              {/* Input Description Problem */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">
                   Defeito Relatado
                 </label>
                 <textarea
-                  value={defeito}
-                  onChange={(e) => setDefeito(e.target.value)}
+                  value={descriptionProblem}
+                  onChange={(e) => setDescriptionProblem(e.target.value)}
                   placeholder="Descreva detalhadamente o problema..."
                   rows={3}
                   className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder-slate-600 resize-none"
                 />
               </div>
 
-              {/* Botões do Modal */}
+              {/* Botões */}
               <div className="flex gap-3 mt-6 justify-end">
                 <button
                   type="button"
@@ -322,8 +379,7 @@ export default function Orders() {
                   Cancelar
                 </button>
                 <button
-                  type="button"
-                  onClick={handleCreateOrder}
+                  type="submit"
                   disabled={isSubmitting}
                   className="px-5 py-2.5 rounded-lg bg-emerald-500 text-slate-950 font-semibold hover:bg-emerald-400 transition-colors disabled:opacity-50"
                 >
@@ -331,7 +387,7 @@ export default function Orders() {
                 </button>
               </div>
             </div>
-          </div>
+          </form>
         </div>
       )}
     </div>
