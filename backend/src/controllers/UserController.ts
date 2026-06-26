@@ -66,4 +66,17 @@ export class UserController {
         .json({ error: "Erro interno no servidor", detalhes: error.message });
     }
   }
+
+  async listAll (req: Request, res: Response) {
+    try {
+      const sql = "SELECT id, name FROM users ORDER BY name ASC";
+      const [rows]: any = await pool.execute(sql);
+
+      return res.json(rows);
+    } catch (error: any) {
+      return res
+        .status(500)
+        .json({ error: "Erro ao listar usuários/técnicos", detalhes: error.message });
+    }
+  }
 }
