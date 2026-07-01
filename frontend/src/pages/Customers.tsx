@@ -15,6 +15,7 @@ export default function Customers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Estado Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -89,6 +90,15 @@ export default function Customers() {
     window.location.href = "/login";
   }
 
+  const filteredCustomers = customers.filter((cli) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      cli.name.toLowerCase().includes(term) ||
+      cli.email.toLowerCase().includes(term) ||
+      cli.phone.includes(term)
+    );
+  });
+
   return (
     <div className="flex h-screen bg-slate-950 text-white">
       {/* Barra Lateral */}
@@ -141,6 +151,16 @@ export default function Customers() {
           </button>
         </header>
 
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="Buscar clientes..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="bg-slate-800 text-slate-400 placeholder:text-slate-500 border border-slate-600 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+          />
+        </div>
+
         {error && (
           <div className="mb-6 rounded-lg bg-red-500/10 border border-red-500/20 p-4 text-sm text-red-400">
             {error}
@@ -164,7 +184,7 @@ export default function Customers() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                {customers.map((cli) => (
+                {filteredCustomers.map((cli) => (
                   <tr
                     key={cli.id}
                     className="hover:bg-slate-800/30 transition-colors"
@@ -181,7 +201,7 @@ export default function Customers() {
                   </tr>
                 ))}
 
-                {customers.length === 0 && (
+                {filteredCustomers.length === 0 && (
                   <tr>
                     <td colSpan={5} className="text-center p-8 text-slate-500">
                       Nenhum cliente cadastrado no banco de dados.

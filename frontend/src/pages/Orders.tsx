@@ -38,6 +38,7 @@ export default function Orders() {
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Estados do Modal de Cadastro
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -183,6 +184,17 @@ export default function Orders() {
     window.location.href = "/";
   }
 
+  // Filtra as ordens dinamicamente por ID ou nome do Equipamento
+  const filteredOrders = orders.filter((os) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      os.id.toString().includes(term) ||
+      os.equipment.toLowerCase().includes(term) ||
+      (os.description_problem &&
+        os.description_problem.toLowerCase().includes(term))
+    );
+  });
+
   return (
     <div className="flex h-screen bg-slate-950 text-white">
       {/* Barra Lateral */}
@@ -228,6 +240,15 @@ export default function Orders() {
             + Nova Ordem
           </button>
         </header>
+        <div className="mb-6">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="🔍 Buscar por ID da OS, equipamento ou defeito..."
+            className="w-full max-w-md rounded-lg bg-slate-900 border border-slate-800 p-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors text-sm"
+          />
+        </div>
 
         {loading ? (
           <div className="text-slate-400 font-medium animate-pulse">
@@ -247,7 +268,7 @@ export default function Orders() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                {orders.map((os) => (
+                {filteredOrders.map((os) => (
                   <tr
                     key={os.id}
                     className="hover:bg-slate-800/30 transition-colors"
