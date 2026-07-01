@@ -177,4 +177,43 @@ export class OrderController {
         .json({ error: "Erro ao deletar OS", detalhes: error.message });
     }
   }
+
+  async getDashboardStats(req: Request, res: Response) {
+    try {
+      const statusSql = `
+      SELECT status, COUNT(*) as count
+      FROM service_orders
+      GROUP BY status
+    `;
+      const [statusRows]: any = await pool.execute(statusSql);
+
+      const revenueSql = `
+      SELECT SUM(total_value) as total_revenue
+      FROM service_orders
+      WHERE status IN ('finalizada', 'entregue')
+    `;
+      const [revenueRows]: any = await pool.execute(revenueSql);
+
+      const stats = {
+        aberta: 0,
+        em_orçamento: 0,
+        em_manutencao: 0,
+        finalizada: 0,
+        entregue: 0,
+        faturamento: Number(revenueRows[0].total_revenue || 0),
+      };
+
+      statusRows.forEach((row: any) => {
+        if (row.status in stats) {
+          (stats as any)[row.status] = Number(row.count);
+        }
+      });
+
+      return res.json(stats);
+    } catch (error: any) {
+      return res
+        .status(500)
+        .json({ error: "Erro ao obter estatísticas", detalhes: error.message });
+    }
+  }
 }

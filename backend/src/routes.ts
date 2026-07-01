@@ -49,4 +49,9 @@ router.delete("/orders/:id", authMiddleware, checkRole(["admin"]), (req, res) =>
   orderController.delete(req, res),
 );
 
+// Rota para obter estatísticas do dashboard
+router.get("/dashboard/stats", authMiddleware, (req, res) =>
+  orderController.getDashboardStats(req, res),
+);
+
 export default router;

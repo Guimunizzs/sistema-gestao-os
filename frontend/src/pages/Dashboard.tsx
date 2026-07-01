@@ -1,46 +1,46 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import api from "../services/api";
 
-interface Order {
-  id: number;
-  status: "aberto" | "em_manutencao" | "finalizado";
-  description: string;
-  created_at: string;
+interface DashboardStats {
+  aberta: number;
+  em_orcamento: number;
+  em_manutencao: number;
+  finalizada: number;
+  entregue: number;
+  faturamento: number;
 }
 
 export default function Dashboard() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [stats, setStats] = useState<DashboardStats>({
+    aberta: 0,
+    em_orcamento: 0,
+    em_manutencao: 0,
+    finalizada: 0,
+    entregue: 0,
+    faturamento: 0,
+  });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    async function loadDashboardData() {
-      try {
-        setLoading(true);
-        const response = await api.get("/orders");
-
-        if (Array.isArray(response.data)) {
-          setOrders(response.data);
-        }
-      } catch (err: any) {
-        setError("Não foi possível carregar os dados do Painel.");
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadDashboardData();
-  }, []);
-
-  const abertas = orders.filter((os) => os.status === "aberto").length;
-  const emManutencao = orders.filter(
-    (os) => os.status === "em_manutencao",
-  ).length;
-  const finalizadas = orders.filter((os) => os.status === "finalizado").length;
 
   function handleLogout() {
     localStorage.removeItem("@SistemaOS:token");
     window.location.href = "/";
   }
+
+  useEffect(() => {
+    async function loadDashboardData() {
+      try {
+        setLoading(true);
+        const response = await api.get("/dashboard/stats");
+        setStats(response.data);
+      } catch (err) {
+        console.error("Erro ao carregar dados da dashboard", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadDashboardData();
+  }, []);
 
   return (
     <div className="flex h-screen bg-slate-950 text-white">
@@ -69,7 +69,6 @@ export default function Dashboard() {
             </a>
           </nav>
         </div>
-
         <button
           onClick={handleLogout}
           className="w-full bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg hover:bg-red-500 hover:text-white transition-colors font-medium"
@@ -81,43 +80,56 @@ export default function Dashboard() {
       {/* Conteúdo Principal */}
       <main className="flex-1 p-10 overflow-y-auto">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold">Painel de Controle</h1>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-slate-400 mt-1">
-            Bem-vindo ao sistema de gerenciamento de OS.
+            Visão geral do faturamento e andamento dos serviços.
           </p>
         </header>
 
-        {error && (
-          <div className="mb-6 rounded-lg bg-red-500/10 border border-red-500/20 p-4 text-sm text-red-400">
-            {error}
-          </div>
-        )}
-
         {loading ? (
           <div className="text-slate-400 font-medium animate-pulse">
-            Carregando dados da API...
+            Carregando indicadores...
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 shadow-lg">
-              <h3 className="text-sm font-medium text-slate-400">OS Abertas</h3>
-              <p className="text-3xl font-bold text-white mt-2">{abertas}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Card Faturamento */}
+            <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-xl">
+              <span className="text-sm font-medium text-slate-500 block mb-2">
+                💰 FATURAMENTO TOTAL
+              </span>
+              <span className="text-3xl font-mono font-bold text-emerald-400">
+                R$ {stats.faturamento.toFixed(2)}
+              </span>
             </div>
-            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 shadow-lg">
-              <h3 className="text-sm font-medium text-slate-400">
-                Em Manutenção
-              </h3>
-              <p className="text-3xl font-bold text-amber-400 mt-2">
-                {emManutencao}
-              </p>
+
+            {/* Card Em Manutenção */}
+            <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-xl">
+              <span className="text-sm font-medium text-slate-500 block mb-2">
+                🛠️ EM MANUTENÇÃO
+              </span>
+              <span className="text-3xl font-bold text-amber-400">
+                {stats.em_manutencao}
+              </span>
             </div>
-            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 shadow-lg">
-              <h3 className="text-sm font-medium text-slate-400">
-                Finalizadas
-              </h3>
-              <p className="text-3xl font-bold text-emerald-400 mt-2">
-                {finalizadas}
-              </p>
+
+            {/* Card Abertas */}
+            <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-xl">
+              <span className="text-sm font-medium text-slate-500 block mb-2">
+                🔹 ORDENS ABERTAS
+              </span>
+              <span className="text-3xl font-bold text-blue-400">
+                {stats.aberta}
+              </span>
+            </div>
+
+            {/* Card Concluídas */}
+            <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-xl">
+              <span className="text-sm font-medium text-slate-500 block mb-2">
+                ✅ FINALIZADAS / ENTREGUES
+              </span>
+              <span className="text-3xl font-bold text-purple-400">
+                {stats.finalizada + stats.entregue}
+              </span>
             </div>
           </div>
         )}
