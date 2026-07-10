@@ -56,6 +56,12 @@ export default function Dashboard() {
               📊 Dashboard
             </a>
             <a
+              href="/users"
+              className="block p-3 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+            >
+              👤 Usuários
+            </a>
+            <a
               href="/orders"
               className="block p-3 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
             >

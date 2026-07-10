@@ -7,6 +7,14 @@ export class UserController {
   async register(req: Request, res: Response) {
     const { username, password, email, role } = req.body;
 
+    if (!username || !email || !password) {
+      return res.status(400).json({
+        error: "Dados incompletos",
+        detalhes:
+          "username, email e password são obrigatórios e não podem ser undefined.",
+      });
+    }
+
     try {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
@@ -67,7 +75,7 @@ export class UserController {
     }
   }
 
-  async listAll (req: Request, res: Response) {
+  async listAll(req: Request, res: Response) {
     try {
       const sql = "SELECT id, name FROM users ORDER BY name ASC";
       const [rows]: any = await pool.execute(sql);
@@ -76,7 +84,10 @@ export class UserController {
     } catch (error: any) {
       return res
         .status(500)
-        .json({ error: "Erro ao listar usuários/técnicos", detalhes: error.message });
+        .json({
+          error: "Erro ao listar usuários/técnicos",
+          detalhes: error.message,
+        });
     }
   }
 }

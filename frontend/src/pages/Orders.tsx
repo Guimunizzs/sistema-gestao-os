@@ -209,6 +209,12 @@ export default function Orders() {
               📊 Dashboard
             </a>
             <a
+              href="/users"
+              className="block p-3 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+            >
+              👤 Usuários
+            </a>
+            <a
               href="/orders"
               className="block p-3 rounded-lg bg-slate-800 text-emerald-400 font-medium"
             >
