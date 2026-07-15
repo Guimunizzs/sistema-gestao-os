@@ -322,119 +322,99 @@ export default function Orders() {
         )}
       </main>
 
-      {/* MODAL DE CADASTRO (Omitido aqui por espaço, permanece igual ao seu anterior) */}
-
-      {/* MODAL DE EDIÇÃO TÉCNICA (Aparece se editingOrder não for null) */}
-      {editingOrder && (
+      {/* MODAL DE CADASTRO */}
+      {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handleSaveEditOrder();
+              handleCreateOrder();
             }}
             className="w-full max-w-lg rounded-2xl bg-slate-900 border border-slate-800 p-6 shadow-2xl"
           >
-            <div className="mb-4 flex justify-between items-center border-b border-slate-800 pb-3">
+            <div className="mb-6 flex justify-between items-center">
               <h2 className="text-xl font-bold text-white">
-                Editar OS #{editingOrder.id}
+                Abrir Nova Ordem de Serviço
               </h2>
               <button
                 type="button"
-                onClick={() => setEditingOrder(null)}
-                className="text-slate-400 hover:text-white"
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-white transition-colors text-lg"
               >
                 ✕
               </button>
             </div>
 
             <div className="space-y-4">
-              <p className="text-xs text-slate-400 bg-slate-950 p-3 rounded-lg border border-slate-800">
-                <strong>Aparelho:</strong> {editingOrder.equipment} <br />
-                <strong>Defeito inicial:</strong>{" "}
-                {editingOrder.description_problem}
-              </p>
+              {formError && (
+                <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400 text-center">
+                  {formError}
+                </div>
+              )}
 
-              {/* Seleção do Técnico Responsável */}
+              {/* Seleção do Cliente Cadastrado */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                  Técnico Responsável
+                  Cliente *
                 </label>
                 <select
-                  value={editTechnicianId}
-                  onChange={(e) => setEditTechnicianId(e.target.value)}
-                  className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-white focus:outline-none"
+                  value={selectedCustomerId}
+                  onChange={(e) => setSelectedCustomerId(e.target.value)}
+                  className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
                 >
-                  <option value="">Selecione o técnico...</option>
-                  {technicians.map((tech) => (
-                    <option key={tech.id} value={tech.id}>
-                      {tech.name}
+                  <option value="">
+                    Selecione o cliente dono do aparelho...
+                  </option>
+                  {customers.map((cli) => (
+                    <option key={cli.id} value={cli.id}>
+                      {cli.name}
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* Status e Valor */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                    Status Atual
-                  </label>
-                  <select
-                    value={editStatus}
-                    onChange={(e) => setEditStatus(e.target.value as any)}
-                    className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-white focus:outline-none"
-                  >
-                    <option value="aberta">🔹 Aberta</option>
-                    <option value="em_orcamento">📋 Em Orçamento</option>
-                    <option value="em_manutencao">🛠️ Em Manutenção</option>
-                    <option value="finalizada">✅ Finalizada</option>
-                    <option value="entregue">📦 Entregue</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                    Valor do Serviço (R$)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={editTotalValue}
-                    onChange={(e) => setEditTotalValue(e.target.value)}
-                    placeholder="0,00"
-                    className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-white focus:outline-none font-mono"
-                  />
-                </div>
-              </div>
-
-              {/* Laudo Técnico */}
+              {/* Equipamento */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                  Laudo / Relatório Técnico
+                  Aparelho / Equipamento *
                 </label>
-                <textarea
-                  value={editTechnicalReport}
-                  onChange={(e) => setEditTechnicalReport(e.target.value)}
-                  placeholder="Descreva o diagnóstico ou o que foi reparado no equipamento..."
-                  rows={4}
-                  className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-white focus:outline-none resize-none"
+                <input
+                  type="text"
+                  value={equipment}
+                  onChange={(e) => setEquipment(e.target.value)}
+                  placeholder="Ex: iPhone 13 Pro Max ou Notebook Dell"
+                  className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
 
-              {/* Botões */}
-              <div className="flex gap-3 mt-6 justify-end border-t border-slate-800 pt-4">
+              {/* Descrição do Problema */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  Defeito Relatado *
+                </label>
+                <textarea
+                  value={descriptionProblem}
+                  onChange={(e) => setDescriptionProblem(e.target.value)}
+                  placeholder="Ex: Não liga após queda ou tela piscando verde..."
+                  rows={3}
+                  className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 mt-6 justify-end">
                 <button
                   type="button"
-                  onClick={() => setEditingOrder(null)}
-                  className="px-4 py-2.5 rounded-lg border border-slate-800 text-slate-400 font-medium"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2.5 rounded-lg border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors font-medium"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-lg bg-emerald-500 text-slate-950 font-semibold hover:bg-emerald-400"
+                  className="px-5 py-2.5 rounded-lg bg-emerald-500 text-slate-950 font-semibold hover:bg-emerald-400 transition-colors disabled:opacity-50"
                 >
-                  {isSubmitting ? "Salvando..." : "Atualizar Ordem"}
+                  {isSubmitting ? "Abrindo..." : "Abrir OS"}
                 </button>
               </div>
             </div>
