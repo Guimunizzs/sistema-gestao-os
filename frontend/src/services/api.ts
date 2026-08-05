@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:3001",
+  baseURL: "https://sistema-gestao-os.onrender.com",
 });
 
 // Configuração para incluir o token de autenticação em todas as requisições
