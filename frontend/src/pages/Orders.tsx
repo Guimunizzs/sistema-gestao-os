@@ -81,10 +81,11 @@ export default function Orders() {
 
         if (Array.isArray(ordersRes.data)) setOrders(ordersRes.data);
         if (Array.isArray(customersRes.data)) setCustomers(customersRes.data);
-        if (Array.isArray(techniciansRes.data)) setTechnicians(techniciansRes.data);
+        if (Array.isArray(techniciansRes.data))
+          setTechnicians(techniciansRes.data);
       } catch (err) {
         setError("Erro ao carregar dados do sistema.");
-      } font-medium {
+      } finally {
         setLoading(false);
       }
     }
@@ -129,7 +130,7 @@ export default function Orders() {
   async function handleUpdateStatus(
     orderId: number,
     currentOrder: Order,
-    newStatus: Order["status"]
+    newStatus: Order["status"],
   ) {
     try {
       await api.put(`/orders/${orderId}`, {
