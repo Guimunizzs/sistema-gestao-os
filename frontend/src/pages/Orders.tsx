@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../services/api";
 
 interface Order {
@@ -29,7 +29,8 @@ interface Customer {
 
 interface Technician {
   id: number;
-  name: string; // Ajuste se no seu banco for 'username' ou 'nome'
+  name?: string;
+  username?: string;
 }
 
 export default function Orders() {
@@ -55,7 +56,6 @@ export default function Orders() {
   const [editTechnicianId, setEditTechnicianId] = useState("");
   const [editStatus, setEditStatus] = useState<Order["status"]>("aberta");
 
-  // Recarrega as ordens na tabela
   async function loadOrders() {
     try {
       const response = await api.get("/orders");
@@ -67,7 +67,6 @@ export default function Orders() {
     }
   }
 
-  // Carregamento Inicial Seguro (Ordens, Clientes e Técnicos)
   useEffect(() => {
     async function initPage() {
       try {
@@ -77,16 +76,15 @@ export default function Orders() {
         const [ordersRes, customersRes, techniciansRes] = await Promise.all([
           api.get("/orders"),
           api.get("/customers"),
-          api.get("/users").catch(() => ({ data: [] })), // Fallback seguro se não tiver a rota de usuários ainda
+          api.get("/users").catch(() => ({ data: [] })),
         ]);
 
         if (Array.isArray(ordersRes.data)) setOrders(ordersRes.data);
         if (Array.isArray(customersRes.data)) setCustomers(customersRes.data);
-        if (Array.isArray(techniciansRes.data))
-          setTechnicians(techniciansRes.data);
+        if (Array.isArray(techniciansRes.data)) setTechnicians(techniciansRes.data);
       } catch (err) {
         setError("Erro ao carregar dados do sistema.");
-      } finally {
+      } font-medium {
         setLoading(false);
       }
     }
@@ -94,7 +92,6 @@ export default function Orders() {
     initPage();
   }, []);
 
-  // Abrir modal de edição pré-preenchendo os dados da OS selecionada
   function handleOpenEditModal(order: Order) {
     setEditingOrder(order);
     setEditTechnicalReport(order.technical_report || "");
@@ -104,7 +101,6 @@ export default function Orders() {
     setFormError("");
   }
 
-  // Salvar a edição completa da OS (Laudo, Valor, Técnico e Status)
   async function handleSaveEditOrder() {
     if (!editingOrder) return;
 
@@ -130,11 +126,10 @@ export default function Orders() {
     }
   }
 
-  // Função inline rápida apenas para mudar o status pelo select da tabela
   async function handleUpdateStatus(
     orderId: number,
     currentOrder: Order,
-    newStatus: Order["status"],
+    newStatus: Order["status"]
   ) {
     try {
       await api.put(`/orders/${orderId}`, {
@@ -184,7 +179,6 @@ export default function Orders() {
     window.location.href = "/";
   }
 
-  // Filtra as ordens dinamicamente por ID ou nome do Equipamento
   const filteredOrders = orders.filter((os) => {
     const term = searchTerm.toLowerCase();
     return (
@@ -246,6 +240,14 @@ export default function Orders() {
             + Nova Ordem
           </button>
         </header>
+
+        {/* Alerta de erro global */}
+        {error && (
+          <div className="mb-6 rounded-lg bg-red-500/10 border border-red-500/20 p-4 text-red-400">
+            {error}
+          </div>
+        )}
+
         <div className="mb-6">
           <input
             type="text"
@@ -322,7 +324,7 @@ export default function Orders() {
         )}
       </main>
 
-      {/* MODAL DE CADASTRO */}
+      {/* MODAL DE CADASTRO DE NOVA OS */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
           <form
@@ -352,7 +354,6 @@ export default function Orders() {
                 </div>
               )}
 
-              {/* Seleção do Cliente Cadastrado */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">
                   Cliente *
@@ -373,7 +374,6 @@ export default function Orders() {
                 </select>
               </div>
 
-              {/* Equipamento */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">
                   Aparelho / Equipamento *
@@ -387,7 +387,6 @@ export default function Orders() {
                 />
               </div>
 
-              {/* Descrição do Problema */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">
                   Defeito Relatado *
@@ -415,6 +414,125 @@ export default function Orders() {
                   className="px-5 py-2.5 rounded-lg bg-emerald-500 text-slate-950 font-semibold hover:bg-emerald-400 transition-colors disabled:opacity-50"
                 >
                   {isSubmitting ? "Abrindo..." : "Abrir OS"}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* MODAL DE EDIÇÃO TÉCNICA DA OS */}
+      {editingOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSaveEditOrder();
+            }}
+            className="w-full max-w-lg rounded-2xl bg-slate-900 border border-slate-800 p-6 shadow-2xl"
+          >
+            <div className="mb-6 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-white">
+                Editar OS #{editingOrder.id}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setEditingOrder(null)}
+                className="text-slate-400 hover:text-white transition-colors text-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {formError && (
+                <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400 text-center">
+                  {formError}
+                </div>
+              )}
+
+              {/* Status */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  Status da OS
+                </label>
+                <select
+                  value={editStatus}
+                  onChange={(e) =>
+                    setEditStatus(e.target.value as Order["status"])
+                  }
+                  className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                >
+                  <option value="aberta">🔹 Aberta</option>
+                  <option value="em_orcamento">📋 Em Orçamento</option>
+                  <option value="em_manutencao">🛠️ Em Manutenção</option>
+                  <option value="finalizada">✅ Finalizada</option>
+                  <option value="entregue">📦 Entregue</option>
+                </select>
+              </div>
+
+              {/* Seleção do Técnico Responsável */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  Técnico Responsável
+                </label>
+                <select
+                  value={editTechnicianId}
+                  onChange={(e) => setEditTechnicianId(e.target.value)}
+                  className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                >
+                  <option value="">Nenhum técnico atribuído</option>
+                  {technicians.map((tech) => (
+                    <option key={tech.id} value={tech.id}>
+                      {tech.name || tech.username || `Técnico #${tech.id}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Valor do Serviço */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  Valor Total (R$)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={editTotalValue}
+                  onChange={(e) => setEditTotalValue(e.target.value)}
+                  placeholder="0.00"
+                  className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                />
+              </div>
+
+              {/* Laudo Técnico */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  Laudo Técnico / Diagnóstico
+                </label>
+                <textarea
+                  value={editTechnicalReport}
+                  onChange={(e) => setEditTechnicalReport(e.target.value)}
+                  placeholder="Descreva o que foi reparado ou peças trocadas..."
+                  rows={3}
+                  className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 mt-6 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setEditingOrder(null)}
+                  className="px-4 py-2.5 rounded-lg border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-5 py-2.5 rounded-lg bg-emerald-500 text-slate-950 font-semibold hover:bg-emerald-400 transition-colors disabled:opacity-50"
+                >
+                  {isSubmitting ? "Salvando..." : "Salvar Alterações"}
                 </button>
               </div>
             </div>
