@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../services/api";
 
 interface User {
@@ -91,30 +92,30 @@ export default function Users() {
         <div>
           <h2 className="text-2xl font-bold text-emerald-400 mb-8">FixOS</h2>
           <nav className="space-y-4">
-            <a
-              href="/dashboard"
+            <Link
+              to="/dashboard"
               className="block p-3 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
             >
               📊 Dashboard
-            </a>
-            <a
-              href="/orders"
+            </Link>
+            <Link
+              to="/orders"
               className="block p-3 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
             >
               🔧 Ordens de Serviço
-            </a>
-            <a
-              href="/customers"
+            </Link>
+            <Link
+              to="/customers"
               className="block p-3 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
             >
               👥 Clientes
-            </a>
-            <a
-              href="/users"
+            </Link>
+            <Link
+              to="/users"
               className="block p-3 rounded-lg bg-slate-800 text-emerald-400 font-medium"
             >
               🛡️ Equipe
-            </a>
+            </Link>
           </nav>
         </div>
         <button
