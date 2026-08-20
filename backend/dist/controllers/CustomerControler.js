@@ -38,7 +38,7 @@ class CustomerController {
     }
     async listAll(req, res) {
         try {
-            const sql = "SELECT id, name FROM customers ORDER BY name ASC";
+            const sql = "SELECT id, name, phone, email, document, address, created_at FROM customers ORDER BY name ASC";
             const [rows] = await database_1.default.execute(sql);
             return res.status(200).json(rows);
         }
