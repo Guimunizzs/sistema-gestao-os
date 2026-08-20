@@ -60,7 +60,7 @@ export default function Login() {
           }}
           className="space-y-6"
         >
-          {registered && (
+          {registered && !error && (
             <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-sm text-emerald-400 text-center">
               Conta criada com sucesso! Faça login para continuar.
             </div>
