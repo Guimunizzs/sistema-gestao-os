@@ -52,7 +52,7 @@ export default function Users() {
 
     try {
       setIsSubmitting(true);
-      await api.post("/register", {
+      await api.post("/users", {
         username: userName,
         email: userEmail,
         password,
