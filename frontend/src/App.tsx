@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import React from "react";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Orders from "./pages/Orders";
 import Customers from "./pages/Customers";
@@ -18,6 +19,7 @@ function App() {
         {/* Rota Pública*/}
 
         <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
         {/* Rota Protegida (Só entra se tiver Token) */}
         <Route
