@@ -16,6 +16,12 @@ router.post("/login", (req, res) => userController.login(req, res));
 router.get("/users", authMiddleware, (req, res) =>
   userController.listAll(req, res),
 );
+router.post(
+  "/users",
+  authMiddleware,
+  checkRole(["admin"]),
+  (req, res) => userController.createByAdmin(req, res),
+);
 
 // Rotas para ordens de serviço
 router.post("/orders", authMiddleware, (req, res) =>
