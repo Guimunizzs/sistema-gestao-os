@@ -8,7 +8,41 @@ const database_1 = __importDefault(require("../config/database"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 class UserController {
+    async createUser(username, email, password, role) {
+        const salt = await bcryptjs_1.default.genSalt(10);
+        const hashedPassword = await bcryptjs_1.default.hash(password, salt);
+        const sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
+        const params = [username, email, hashedPassword, role];
+        const [result] = await database_1.default.execute(sql, params);
+        return result.insertId;
+    }
     async register(req, res) {
+        const { username, password, email } = req.body;
+        if (!username || !email || !password) {
+            return res.status(400).json({
+                error: "Dados incompletos",
+                detalhes: "username, email e password são obrigatórios e não podem ser undefined.",
+            });
+        }
+        try {
+            const userId = await this.createUser(username, email, password, "tecnico");
+            return res.status(201).json({
+                message: "Usuário registrado com sucesso",
+                userId,
+            });
+        }
+        catch (error) {
+            if (error.code === "ER_DUP_ENTRY") {
+                return res
+                    .status(400)
+                    .json({ error: "Este e-mail já está cadastrado." });
+            }
+            return res
+                .status(500)
+                .json({ error: "Erro interno no servidor", detalhes: error.message });
+        }
+    }
+    async createByAdmin(req, res) {
         const { username, password, email, role } = req.body;
         if (!username || !email || !password) {
             return res.status(400).json({
@@ -17,18 +51,13 @@ class UserController {
             });
         }
         try {
-            const salt = await bcryptjs_1.default.genSalt(10);
-            const hashedPassword = await bcryptjs_1.default.hash(password, salt);
-            const sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
-            const params = [username, email, hashedPassword, role || "tecnico"];
-            const [result] = await database_1.default.execute(sql, params);
+            const userId = await this.createUser(username, email, password, role || "tecnico");
             return res.status(201).json({
                 message: "Usuário registrado com sucesso",
-                userId: result.insertId,
+                userId,
             });
         }
         catch (error) {
-            // Tratamento de erro específico para e-mail duplicado
             if (error.code === "ER_DUP_ENTRY") {
                 return res
                     .status(400)

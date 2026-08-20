@@ -14,6 +14,7 @@ const customerController = new CustomerControler_1.CustomerController();
 router.post("/register", (req, res) => userController.register(req, res));
 router.post("/login", (req, res) => userController.login(req, res));
 router.get("/users", auth_1.authMiddleware, (req, res) => userController.listAll(req, res));
+router.post("/users", auth_1.authMiddleware, (0, CheckRole_1.checkRole)(["admin"]), (req, res) => userController.createByAdmin(req, res));
 // Rotas para ordens de serviço
 router.post("/orders", auth_1.authMiddleware, (req, res) => orderController.create(req, res));
 router.get("/orders", auth_1.authMiddleware, (req, res) => orderController.listAll(req, res));
