@@ -1,9 +1,13 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import api from "../services/api";
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const registered = Boolean(
+    (location.state as { registered?: boolean } | null)?.registered,
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -56,6 +60,12 @@ export default function Login() {
           }}
           className="space-y-6"
         >
+          {registered && (
+            <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-sm text-emerald-400 text-center">
+              Conta criada com sucesso! Faça login para continuar.
+            </div>
+          )}
+
           {error && (
             <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400 text-center">
               {error}
@@ -95,6 +105,16 @@ export default function Login() {
           >
             {loading ? "Carregando..." : "Entrar no Sistema"}
           </button>
+
+          <p className="text-center text-sm text-slate-400">
+            Ainda não tem conta?{" "}
+            <Link
+              to="/register"
+              className="text-emerald-400 hover:text-emerald-300 font-medium"
+            >
+              Criar conta
+            </Link>
+          </p>
         </form>
       </div>
     </div>
